@@ -1,0 +1,27 @@
+python
+java
+c++
+sql
+javascript
+html
+css
+react
+node.js
+aws
+azure
+docker
+kubernetes
+linux
+git
+machine learning
+deep learning
+data analysis
+excel
+tensorflow
+pytorch
+nlp
+streamlit
+flask
+django
+power bi
+tableau
