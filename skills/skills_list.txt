@@ -25,3 +25,16 @@ flask
 django
 power bi
 tableau
+numpy
+pandas
+c
+Open AI APIs
+LangChain
+Retrieval Augmented Generation (RAG)
+php
+MySQL
+FastAPI
+Android Studio
+VS Code
+Swift
+NetBeans
