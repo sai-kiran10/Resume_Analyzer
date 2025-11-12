@@ -86,6 +86,11 @@ def compute_weighted_score(skill_fraction, edu_match, similarity_score):
     sim_score = similarity_score * 0.2 # similarity 20%
     return round(skill_score + edu_score + sim_score, 2)
 
+def show_signature():
+    print("⚡ Resume Analyzer by Sai Kiran Vasa")
+
+show_signature()
+
 # --- Streamlit UI ---
 st.markdown("<h2 style='text-align:center;'>📄 Resume Analyzer</h2>", unsafe_allow_html=True)
 st.markdown("<hr>", unsafe_allow_html=True)
@@ -111,7 +116,7 @@ with col_right:
     col_left, col_center, col_right = st.columns([1, 3, 1])
     with col_center:
         jd_option = st.radio(
-            "",
+            "JD Input Type",
             ["Upload Job Description File", "Paste Job Description"],
             horizontal=True,
             label_visibility="collapsed"
@@ -204,10 +209,10 @@ if analyze and resume_text and jd_text and jd_text.strip():
     st.write(f"**Education Match:** {'Yes' if edu_match else 'No'}")
     st.write(f"**Semantic Similarity:** {similarity_score}%")
 
-    with st.expander("🔍 View Job Description Text"):
-        st.text(jd_text[:5000])
-    with st.expander("📘 View Resume Text"):
-        st.text(resume_text[:5000])
-
 elif analyze:
     st.warning("⚠️ Please upload a resume and either upload or paste a job description before analyzing.")
+
+st.markdown(
+    "<hr><p style='text-align:center; color: gray; font-size:12px;'>© 2025 Sai Kiran. All rights reserved.</p>",
+    unsafe_allow_html=True
+)
