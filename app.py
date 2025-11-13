@@ -138,11 +138,9 @@ with col_right:
             else:
                 jd_text = b.read().decode(errors="ignore")
     else:
-        # when pasting, we want the text area to appear *below* the uploader baseline so the layout stays aligned
         jd_text = st.text_area("Paste Job Description Here:", height=200)
 
 # --- Center the Parse & Analyze button.
-# We'll create three equal columns and place the button in the center one.
 btn_col_left, btn_col_center, btn_col_right = st.columns([1, 1, 1])
 
 # style button via CSS for consistent appearance
@@ -180,35 +178,121 @@ if resume_file:
     else:
         resume_text = extract_text_from_docx(b)
 
-# If user uploaded JD file earlier, jd_text is already set; if they pasted, jd_text from text_area
+# --- Analysis & Enhanced UI ---
 if analyze and resume_text and jd_text and jd_text.strip():
-    st.success("✅ Analyzing resume and job description...")
+    #st.success("✅ Analyzing resume and job description...")
 
-    # --- Skills ---
+    # --- Compute analysis (skills, education, similarity, score) ---
     resume_skills = expand_skills(extract_skills(resume_text))
     jd_skills = expand_skills(extract_skills(jd_text))
     matched_skills = resume_skills & jd_skills
     missing_skills = jd_skills - resume_skills
-    skill_fraction = len(matched_skills) / len(jd_skills) if jd_skills else 0
+    skill_fraction = len(matched_skills) / len(jd_skills) if jd_skills else 0.0
 
-    # --- Education ---
     resume_degrees = extract_education(resume_text)
     edu_match = match_education(resume_degrees, jd_text)
 
-    # --- Similarity ---
-    similarity_score = compute_similarity(resume_text, jd_text)
-
-    # --- Weighted score ---
+    similarity_score = compute_similarity(resume_text, jd_text)  # percentage 0-100
     overall_score = compute_weighted_score(skill_fraction, edu_match, similarity_score / 100)
 
-    # --- Display ---
-    st.subheader("📊 Match Analysis")
-    st.metric("Overall Weighted Score", f"{overall_score}%")
-    st.write(f"**Skills Matched ({len(matched_skills)}):** {', '.join(sorted(matched_skills)) or 'None'}")
-    st.write(f"**Missing Skills ({len(missing_skills)}):** {', '.join(sorted(missing_skills)) or 'None'}")
-    st.write(f"**Education Match:** {'Yes' if edu_match else 'No'}")
-    st.write(f"**Semantic Similarity:** {similarity_score}%")
+    # --- Top: Big overall score and status label ---
+    if overall_score >= 90:
+        overall_color = "#16a34a"  # green
+        status_text = "Strong Match 💪"
+    elif overall_score >= 80:
+        overall_color = "#059669"  # light-green
+        status_text = "Good Match 👍"
+    elif overall_score >= 70:
+        overall_color = "#f59e0b"  # amber
+        status_text = "Fair Match"
+    else:
+        overall_color = "#dc2626"  # red
+        status_text = "Needs Improvement 🚀"
 
+    st.markdown(
+        f"""
+        <div style="text-align:center; margin-top:6px;">
+            <div style="font-size:64px; font-weight:800; color:{overall_color};">{overall_score}%</div>
+            <div style="font-size:20px; color:gray; margin-top:4px;">{status_text}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("### 📊 Breakdown Analysis")
+
+    # --- Three interactive "cards" implemented as expanders (persistent) ---
+    c1, c2, c3 = st.columns(3)
+
+    # Education card
+    with c1:
+        header = "🎓 Education"
+        sub = "Matched" if edu_match else "Not matched"
+        st.markdown(f"**{header} — {sub}**")
+        with st.expander("Details"):
+            if edu_match:
+                st.success("Candidate satisfies the degree requirement stated in the JD.")
+                if resume_degrees:
+                    st.write("Degrees found in resume:", ", ".join(resume_degrees))
+            else:
+                st.error("Candidate does NOT satisfy the degree requirement (per JD).")
+                if resume_degrees:
+                    st.write("Degrees found in resume:", ", ".join(resume_degrees))
+                else:
+                    st.write("No degree mentions detected in resume.")
+
+    # Skills card
+    with c2:
+        header = "🧠 Skills"
+        st.markdown(f"**{header} — {len(matched_skills)}/{len(jd_skills) if jd_skills else 0} matched**")
+        with st.expander("View matched / missing skills"):
+            if matched_skills:
+                # matched badges
+                matched_html = " ".join([f"<span style='background:#16a34a;color:white;padding:6px 8px;border-radius:6px;margin:3px;display:inline-block;font-size:13px;'>{m}</span>" for m in sorted(matched_skills)])
+                st.markdown(f"**Matched:**<br>{matched_html}", unsafe_allow_html=True)
+            else:
+                st.write("No matched skills found.")
+
+            if missing_skills:
+                missing_html = " ".join([f"<span style='background:#ef4444;color:white;padding:6px 8px;border-radius:6px;margin:3px;display:inline-block;font-size:13px;'>{m}</span>" for m in sorted(missing_skills)])
+                st.markdown(f"**Missing:**<br>{missing_html}", unsafe_allow_html=True)
+            else:
+                st.write("No missing skills detected.")
+
+    # Semantic similarity card
+    with c3:
+        header = "🤖 Semantic Match"
+        st.markdown(f"**{header} — {similarity_score}%**")
+        with st.expander("Why this matters / Examples"):
+            st.write("This score measures overall text similarity (context, experience descriptions).")
+            # Optionally show short example matches: find top matching sentences (simple heuristic)
+            try:
+                # extract candidate sentences that are most similar to JD by embedding each sentence
+                jd_sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', jd_text) if s.strip()]
+                resume_sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', resume_text) if s.strip()]
+                if jd_sentences and resume_sentences:
+                    jd_embs = embedder.encode(jd_sentences)
+                    res_embs = embedder.encode(resume_sentences)
+                    import numpy as np
+                    sims = cosine_similarity(jd_embs, res_embs)  # jd_sent x res_sent
+                    # find top jd sentence -> best resume sentence pair
+                    top_pairs = []
+                    for i in range(min(3, len(jd_sentences))):
+                        idx = sims[i].argmax()
+                        top_pairs.append((jd_sentences[i][:200], resume_sentences[idx][:200], float(sims[i][idx])))
+                    st.write("Sample matched snippets (JD → Resume):")
+                    for jd_snip, res_snip, sc in top_pairs:
+                        st.markdown(f"- **JD:** {jd_snip}")
+                        st.markdown(f"  - **Resume:** {res_snip} (sim={sc:.2f})")
+                else:
+                    st.write("Not enough text to display snippet matches.")
+            except Exception:
+                st.write("Preview of snippet matches unavailable (embedding step skipped).")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+# old condition to warn if analyze pressed but inputs missing
 elif analyze:
     st.warning("⚠️ Please upload a resume and either upload or paste a job description before analyzing.")
 
