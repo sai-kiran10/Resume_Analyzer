@@ -166,6 +166,55 @@ st.markdown(
     """, unsafe_allow_html=True
 )
 
+st.markdown("""
+<style>
+/* Circular meter */
+.progress-circle {
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: conic-gradient(#4CAF50 var(--value), #ddd 0deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: auto;
+    position: relative;
+}
+
+.progress-circle span {
+    position: absolute;
+    font-size: 32px;
+    font-weight: 700;
+    color: #333;
+}
+
+/* clickable cards */
+.card {
+    padding: 18px;
+    background: #f4f4f4;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.card:hover {
+    background: #e5e5e5;
+}
+
+/* hidden content box */
+.card-content {
+    padding: 12px;
+    background: white;
+    border-left: 4px solid #4CAF50;
+    margin-top: 6px;
+    display: none;
+    border-radius: 6px;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 with btn_col_center:
     analyze = st.button("🚀 Parse & Analyze")
 
@@ -180,7 +229,7 @@ if resume_file:
 
 # --- Analysis & Enhanced UI ---
 if analyze and resume_text and jd_text and jd_text.strip():
-    #st.success("✅ Analyzing resume and job description...")
+    #st.success("Analyzing resume and job description...")
 
     # --- Compute analysis (skills, education, similarity, score) ---
     resume_skills = expand_skills(extract_skills(resume_text))
@@ -209,92 +258,78 @@ if analyze and resume_text and jd_text and jd_text.strip():
         overall_color = "#dc2626"  # red
         status_text = "Needs Improvement 🚀"
 
-    st.markdown(
-        f"""
-        <div style="text-align:center; margin-top:6px;">
-            <div style="font-size:64px; font-weight:800; color:{overall_color};">{overall_score}%</div>
-            <div style="font-size:20px; color:gray; margin-top:4px;">{status_text}</div>
+    st.markdown(f"""
+        <div class="progress-circle" style="--value:{overall_score * 3.6}deg;">
+            <span>{overall_score}%</span>
         </div>
-        """,
-        unsafe_allow_html=True,
-    )
+        <p style="text-align:center; font-size:18px; color:gray; margin-top:8px;">
+            {status_text}
+        </p>
+        """, unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("### 📊 Breakdown Analysis")
 
-    # --- Three interactive "cards" implemented as expanders (persistent) ---
     c1, c2, c3 = st.columns(3)
 
-    # Education card
+    # ----- Education -----
     with c1:
-        header = "🎓 Education"
-        sub = "Matched" if edu_match else "Not matched"
-        st.markdown(f"**{header} — {sub}**")
-        with st.expander("Details"):
-            if edu_match:
-                st.success("Candidate satisfies the degree requirement stated in the JD.")
-                if resume_degrees:
-                    st.write("Degrees found in resume:", ", ".join(resume_degrees))
-            else:
-                st.error("Candidate does NOT satisfy the degree requirement (per JD).")
-                if resume_degrees:
-                    st.write("Degrees found in resume:", ", ".join(resume_degrees))
-                else:
-                    st.write("No degree mentions detected in resume.")
+        st.markdown(f"""
+        <div class="card" onclick="toggleCard('edu_box')">
+            🎓 Education<br>
+            <span style='font-size:13px; color:gray;'>{'Matched' if edu_match else 'Not matched'}</span>
+        </div>
+        <div id="edu_box" class="card-content">
+            <b>Degrees Found:</b><br>{", ".join(resume_degrees) or "None"}<br><br>
+            <b>JD Requirement Match:</b> {edu_match}
+        </div>
+        """, unsafe_allow_html=True)
 
-    # Skills card
+    # ----- Skills -----
     with c2:
-        header = "🧠 Skills"
-        st.markdown(f"**{header} — {len(matched_skills)}/{len(jd_skills) if jd_skills else 0} matched**")
-        with st.expander("View matched / missing skills"):
-            if matched_skills:
-                # matched badges
-                matched_html = " ".join([f"<span style='background:#16a34a;color:white;padding:6px 8px;border-radius:6px;margin:3px;display:inline-block;font-size:13px;'>{m}</span>" for m in sorted(matched_skills)])
-                st.markdown(f"**Matched:**<br>{matched_html}", unsafe_allow_html=True)
-            else:
-                st.write("No matched skills found.")
+        matched_html = " ".join([f"<span style='background:#16a34a;color:white;padding:6px 8px;border-radius:6px;margin:3px;display:inline-block;font-size:13px;'>{m}</span>" for m in sorted(matched_skills)])
+        missing_html = " ".join([f"<span style='background:#dc2626;color:white;padding:6px 8px;border-radius:6px;margin:3px;display:inline-block;font-size:13px;'>{m}</span>" for m in sorted(missing_skills)])
 
-            if missing_skills:
-                missing_html = " ".join([f"<span style='background:#ef4444;color:white;padding:6px 8px;border-radius:6px;margin:3px;display:inline-block;font-size:13px;'>{m}</span>" for m in sorted(missing_skills)])
-                st.markdown(f"**Missing:**<br>{missing_html}", unsafe_allow_html=True)
-            else:
-                st.write("No missing skills detected.")
+        st.markdown(f"""
+        <div class="card" onclick="toggleCard('skills_box')">
+            🧠 Skills<br>
+            <span style='font-size:13px; color:gray;'>{len(matched_skills)}/{len(jd_skills)} matched</span>
+        </div>
+        <div id="skills_box" class="card-content">
+            <b>Matched Skills:</b><br>{matched_html or "None"}<br><br>
+            <b>Missing Skills:</b><br>{missing_html or "None"}
+        </div>
+        """, unsafe_allow_html=True)
 
-    # Semantic similarity card
+    # ----- Semantic Match -----
     with c3:
-        header = "🤖 Semantic Match"
-        st.markdown(f"**{header} — {similarity_score}%**")
-        with st.expander("Why this matters / Examples"):
-            st.write("This score measures overall text similarity (context, experience descriptions).")
-            # Optionally show short example matches: find top matching sentences (simple heuristic)
-            try:
-                # extract candidate sentences that are most similar to JD by embedding each sentence
-                jd_sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', jd_text) if s.strip()]
-                resume_sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', resume_text) if s.strip()]
-                if jd_sentences and resume_sentences:
-                    jd_embs = embedder.encode(jd_sentences)
-                    res_embs = embedder.encode(resume_sentences)
-                    import numpy as np
-                    sims = cosine_similarity(jd_embs, res_embs)  # jd_sent x res_sent
-                    # find top jd sentence -> best resume sentence pair
-                    top_pairs = []
-                    for i in range(min(3, len(jd_sentences))):
-                        idx = sims[i].argmax()
-                        top_pairs.append((jd_sentences[i][:200], resume_sentences[idx][:200], float(sims[i][idx])))
-                    st.write("Sample matched snippets (JD → Resume):")
-                    for jd_snip, res_snip, sc in top_pairs:
-                        st.markdown(f"- **JD:** {jd_snip}")
-                        st.markdown(f"  - **Resume:** {res_snip} (sim={sc:.2f})")
-                else:
-                    st.write("Not enough text to display snippet matches.")
-            except Exception:
-                st.write("Preview of snippet matches unavailable (embedding step skipped).")
-
-    st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="card" onclick="toggleCard('sem_box')">
+            🤖 Semantic Match<br>
+            <span style='font-size:13px; color:gray;'>{similarity_score}%</span>
+        </div>
+        <div id="sem_box" class="card-content">
+            Measures meaning-level similarity between resume & JD.<br><br>
+            Score: <b>{similarity_score}%</b>
+        </div>
+        """, unsafe_allow_html=True)
 
 # old condition to warn if analyze pressed but inputs missing
 elif analyze:
     st.warning("⚠️ Please upload a resume and either upload or paste a job description before analyzing.")
+
+st.markdown("""
+<script>
+function toggleCard(id) {
+    var box = document.getElementById(id);
+    if (box.style.display === "block") {
+        box.style.display = "none";
+    } else {
+        box.style.display = "block";
+    }
+}
+</script>
+""", unsafe_allow_html=True)
 
 st.markdown(
     "<hr><p style='text-align:center; color: gray; font-size:12px;'>© 2025 Sai Kiran. All rights reserved.</p>",
