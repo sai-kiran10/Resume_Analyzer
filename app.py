@@ -87,44 +87,155 @@ def compute_weighted_score(skill_fraction, edu_match, similarity_score):
     return round(skill_score + edu_score + sim_score, 2)
 
 def show_signature():
+    # console signature (visible in terminal)
     print("⚡ Resume Analyzer by Sai Kiran Vasa")
 
 show_signature()
+
+# ---------------------
+# --- CSS / Styling ---
+# ---------------------
+st.markdown("""
+<style>
+/* Apple-style activity ring (conic + subtle gradient + shadow) */
+.activity-ring {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: auto;
+  position: relative;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.08);
+}
+
+/* layered rings using pseudo technique via inner wrappers */
+.activity-ring .outer {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: conic-gradient(var(--color1) 0deg, var(--color1) calc(var(--angle)), rgba(0,0,0,0) calc(var(--angle)));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));
+}
+
+/* inner gradient overlay to make it look like Apple ring */
+.activity-ring .outer::after {
+  content: "";
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: conic-gradient(rgba(255,255,255,0.12) 0deg, rgba(255,255,255,0) 120deg);
+  opacity: 0.6;
+  border-radius:50%;
+}
+
+/* inner white circle that contains the number */
+.activity-ring .inner {
+  width: 150px;
+  height: 150px;
+  background: linear-gradient(180deg, #ffffff, #fbfbfb);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 -6px 12px rgba(0,0,0,0.03);
+}
+
+/* score text */
+.activity-ring .score {
+  font-size: 44px;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.activity-ring .status {
+  font-size: 16px;
+  color: #6b7280;
+}
+
+/* small metric cards (styled expanders) */
+.metrics-row {
+  margin-top: 18px;
+  margin-bottom: 6px;
+}
+
+.metric-card {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.12s ease-in-out;
+  border: 1px solid #eceff1;
+}
+.metric-card:hover {
+  background: #eef2f6;
+}
+
+/* badges */
+.badge-match {
+  background:#10b981;
+  color:white;
+  padding:6px 8px;
+  border-radius:6px;
+  margin:3px;
+  display:inline-block;
+  font-size:13px;
+}
+.badge-miss {
+  background:#ef4444;
+  color:white;
+  padding:6px 8px;
+  border-radius:6px;
+  margin:3px;
+  display:inline-block;
+  font-size:13px;
+}
+
+/* slight responsive tweak: keep columns tidy */
+@media (max-width: 800px) {
+  .activity-ring { width: 180px; height: 180px; }
+  .activity-ring .outer { width: 180px; height: 180px; }
+  .activity-ring .inner { width: 120px; height: 120px; }
+  .activity-ring .score { font-size: 36px; }
+}
+</style>
+""", unsafe_allow_html=True)
 
 # --- Streamlit UI ---
 st.markdown("<h2 style='text-align:center;'>📄 Resume Analyzer</h2>", unsafe_allow_html=True)
 st.markdown("<hr>", unsafe_allow_html=True)
 
 # --- Layout: two columns for uploads
-# We'll use a spacer div before each uploader so the actual "Browse files" area lines up.
 col_left, col_right = st.columns(2)
 
 # Spacer height in px — tweak if you want the uploader boxes lower/higher
 SPACER_PX1 = 70
-SPACER_PX2 = 00
+SPACER_PX2 = 0
 with col_left:
     st.markdown("<h4 style='text-align:center; margin-bottom:6px;'>Upload Resume</h4>", unsafe_allow_html=True)
-    # spacer to push the uploader down so the browse-box aligns with the other column
     st.markdown(f"<div style='height:{SPACER_PX1}px'></div>", unsafe_allow_html=True)
     resume_file = st.file_uploader(" ", type=["pdf", "docx"], label_visibility="collapsed")
 
 with col_right:
     st.markdown("<h4 style='text-align:center; margin-bottom:6px;'>Upload or Paste Job Description</h4>", unsafe_allow_html=True)
-    #jd_option = st.radio("Input Type:", ["Upload Job Description File", "Paste Job Description"], horizontal=True, label_visibility="collapsed")
-    
-    # Center the radio buttons within the column
-    col_left, col_center, col_right = st.columns([1, 3, 1])
-    with col_center:
+    # center radio inside column
+    col_l, col_mid, col_r = st.columns([1, 3, 1])
+    with col_mid:
         jd_option = st.radio(
             "JD Input Type",
             ["Upload Job Description File", "Paste Job Description"],
             horizontal=True,
             label_visibility="collapsed"
         )
-
-    # same spacer to align the JD uploader box with resume uploader
     st.markdown(f"<div style='height:{SPACER_PX2}px'></div>", unsafe_allow_html=True)
-    
     jd_text = ""
     jd_file = None
     if jd_option == "Upload Job Description File":
@@ -142,79 +253,21 @@ with col_right:
 
 # --- Center the Parse & Analyze button.
 btn_col_left, btn_col_center, btn_col_right = st.columns([1, 1, 1])
-
-# style button via CSS for consistent appearance
 st.markdown(
     """
     <style>
-    /* Style the Streamlit button (applies to the next button rendered) */
-    div.stButton > button {
-        background-color: #2196F3;
+    div.stButton > button.primary-button {
+        background-color: #2563eb;
         color: white;
-        padding: 10px 30px;
+        padding: 10px 34px;
+        border-radius: 10px;
         border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        cursor: pointer;
+        font-weight: 700;
     }
-    div.stButton > button:hover {
-        background-color: #0b7dda;
-    }
-    /* Reduce top/bottom padding to make layout tighter */
-    section[data-testid="stSidebar"] { padding-top: 0rem; }
     </style>
-    """, unsafe_allow_html=True
+    """,
+    unsafe_allow_html=True
 )
-
-st.markdown("""
-<style>
-/* Circular meter */
-.progress-circle {
-    width: 180px;
-    height: 180px;
-    border-radius: 50%;
-    background: conic-gradient(#4CAF50 var(--value), #ddd 0deg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: auto;
-    position: relative;
-}
-
-.progress-circle span {
-    position: absolute;
-    font-size: 32px;
-    font-weight: 700;
-    color: #333;
-}
-
-/* clickable cards */
-.card {
-    padding: 18px;
-    background: #f4f4f4;
-    border-radius: 12px;
-    text-align: center;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
-}
-.card:hover {
-    background: #e5e5e5;
-}
-
-/* hidden content box */
-.card-content {
-    padding: 12px;
-    background: white;
-    border-left: 4px solid #4CAF50;
-    margin-top: 6px;
-    display: none;
-    border-radius: 6px;
-}
-</style>
-""", unsafe_allow_html=True)
-
-
 with btn_col_center:
     analyze = st.button("🚀 Parse & Analyze")
 
@@ -229,108 +282,123 @@ if resume_file:
 
 # --- Analysis & Enhanced UI ---
 if analyze and resume_text and jd_text and jd_text.strip():
-    #st.success("Analyzing resume and job description...")
+    # compute analysis
+    with st.spinner("Analyzing... (embeddings may take a few seconds)"):
+        resume_skills = expand_skills(extract_skills(resume_text))
+        jd_skills = expand_skills(extract_skills(jd_text))
+        matched_skills = resume_skills & jd_skills
+        missing_skills = jd_skills - resume_skills
+        skill_fraction = len(matched_skills) / len(jd_skills) if jd_skills else 0.0
 
-    # --- Compute analysis (skills, education, similarity, score) ---
-    resume_skills = expand_skills(extract_skills(resume_text))
-    jd_skills = expand_skills(extract_skills(jd_text))
-    matched_skills = resume_skills & jd_skills
-    missing_skills = jd_skills - resume_skills
-    skill_fraction = len(matched_skills) / len(jd_skills) if jd_skills else 0.0
+        resume_degrees = extract_education(resume_text)
+        edu_match = match_education(resume_degrees, jd_text)
 
-    resume_degrees = extract_education(resume_text)
-    edu_match = match_education(resume_degrees, jd_text)
+        similarity_score = compute_similarity(resume_text, jd_text)  # percentage 0-100
+        overall_score = compute_weighted_score(skill_fraction, edu_match, similarity_score / 100)
 
-    similarity_score = compute_similarity(resume_text, jd_text)  # percentage 0-100
-    overall_score = compute_weighted_score(skill_fraction, edu_match, similarity_score / 100)
-
-    # --- Top: Big overall score and status label ---
+    # decide ring color and status text
     if overall_score >= 90:
-        overall_color = "#16a34a"  # green
+        ring_color = "#16a34a"
         status_text = "Strong Match 💪"
     elif overall_score >= 80:
-        overall_color = "#059669"  # light-green
+        ring_color = "#059669"
         status_text = "Good Match 👍"
     elif overall_score >= 70:
-        overall_color = "#f59e0b"  # amber
+        ring_color = "#f59e0b"
         status_text = "Fair Match"
     else:
-        overall_color = "#dc2626"  # red
+        ring_color = "#ef4444"
         status_text = "Needs Improvement 🚀"
 
-    st.markdown(f"""
-        <div class="progress-circle" style="--value:{overall_score * 3.6}deg;">
-            <span>{overall_score}%</span>
+    # Render Apple-style activity ring around an inner white circle
+    # -- we convert score to degrees (0-360)
+    angle_deg = float(overall_score) * 3.6
+    st.markdown(
+        f"""
+        <div class="activity-ring" style="--color1: {ring_color}; --angle: {angle_deg}deg;">
+            <div class="outer" style="background: conic-gradient({ring_color} 0deg, {ring_color} calc({angle_deg}), rgba(0,0,0,0) calc({angle_deg}));">
+                <div class="inner">
+                    <div class="score" style="color:{ring_color};">{overall_score}%</div>
+                    <div class="status">{status_text}</div>
+                </div>
+            </div>
         </div>
-        <p style="text-align:center; font-size:18px; color:gray; margin-top:8px;">
-            {status_text}
-        </p>
-        """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("### 📊 Breakdown Analysis")
 
+    # Three columns for metrics (use expanders as interactive "cards")
     c1, c2, c3 = st.columns(3)
 
-    # ----- Education -----
+    # EDUCATION
     with c1:
-        st.markdown(f"""
-        <div class="card" onclick="toggleCard('edu_box')">
-            🎓 Education<br>
-            <span style='font-size:13px; color:gray;'>{'Matched' if edu_match else 'Not matched'}</span>
-        </div>
-        <div id="edu_box" class="card-content">
-            <b>Degrees Found:</b><br>{", ".join(resume_degrees) or "None"}<br><br>
-            <b>JD Requirement Match:</b> {edu_match}
-        </div>
-        """, unsafe_allow_html=True)
+        header_text = f"🎓 Education — {'Matched' if edu_match else 'Not matched'}"
+        # style header as markdown to look like a card
+        st.markdown(f"<div style='background:#f8fafc;padding:10px;border-radius:8px;text-align:center;font-weight:700'>{header_text}</div>", unsafe_allow_html=True)
+        with st.expander("View education details"):
+            st.write("**Detected Degrees:**", ", ".join(resume_degrees) if resume_degrees else "None detected")
+            if edu_match:
+                st.success("✔ Candidate satisfies the degree requirement.")
+            else:
+                st.error("✘ Candidate does NOT meet the required degree.")
 
-    # ----- Skills -----
+    # SKILLS
     with c2:
-        matched_html = " ".join([f"<span style='background:#16a34a;color:white;padding:6px 8px;border-radius:6px;margin:3px;display:inline-block;font-size:13px;'>{m}</span>" for m in sorted(matched_skills)])
-        missing_html = " ".join([f"<span style='background:#dc2626;color:white;padding:6px 8px;border-radius:6px;margin:3px;display:inline-block;font-size:13px;'>{m}</span>" for m in sorted(missing_skills)])
+        header_text = f"🧠 Skills — {len(matched_skills)}/{len(jd_skills) if jd_skills else 0} matched"
+        st.markdown(f"<div style='background:#f8fafc;padding:10px;border-radius:8px;text-align:center;font-weight:700'>{header_text}</div>", unsafe_allow_html=True)
+        with st.expander("View matched & missing skills"):
+            st.markdown("**Matched Skills:**")
+            if matched_skills:
+                for m in sorted(matched_skills):
+                    st.markdown(f"<span class='badge-match'>{m}</span>", unsafe_allow_html=True)
+            else:
+                st.write("None")
 
-        st.markdown(f"""
-        <div class="card" onclick="toggleCard('skills_box')">
-            🧠 Skills<br>
-            <span style='font-size:13px; color:gray;'>{len(matched_skills)}/{len(jd_skills)} matched</span>
-        </div>
-        <div id="skills_box" class="card-content">
-            <b>Matched Skills:</b><br>{matched_html or "None"}<br><br>
-            <b>Missing Skills:</b><br>{missing_html or "None"}
-        </div>
-        """, unsafe_allow_html=True)
+            st.markdown("**Missing Skills:**")
+            if missing_skills:
+                for m in sorted(missing_skills):
+                    st.markdown(f"<span class='badge-miss'>{m}</span>", unsafe_allow_html=True)
+            else:
+                st.write("None")
 
-    # ----- Semantic Match -----
+    # SEMANTIC
     with c3:
-        st.markdown(f"""
-        <div class="card" onclick="toggleCard('sem_box')">
-            🤖 Semantic Match<br>
-            <span style='font-size:13px; color:gray;'>{similarity_score}%</span>
-        </div>
-        <div id="sem_box" class="card-content">
-            Measures meaning-level similarity between resume & JD.<br><br>
-            Score: <b>{similarity_score}%</b>
-        </div>
-        """, unsafe_allow_html=True)
+        header_text = f"🤖 Semantic Match — {similarity_score}%"
+        st.markdown(f"<div style='background:#f8fafc;padding:10px;border-radius:8px;text-align:center;font-weight:700'>{header_text}</div>", unsafe_allow_html=True)
+        with st.expander("Why this matters / examples"):
+            st.write("This score measures contextual similarity between the resume and the job description.")
+            # show up to 3 JD -> resume snippet matches
+            try:
+                jd_sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', jd_text) if s.strip()]
+                resume_sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', resume_text) if s.strip()]
+                if jd_sentences and resume_sentences:
+                    jd_embs = embedder.encode(jd_sentences)
+                    res_embs = embedder.encode(resume_sentences)
+                    import numpy as np
+                    sims = cosine_similarity(jd_embs, res_embs)
+                    top_pairs = []
+                    for i in range(min(3, len(jd_sentences))):
+                        idx = sims[i].argmax()
+                        top_pairs.append((jd_sentences[i][:200], resume_sentences[idx][:200], float(sims[i][idx])))
+                    st.write("Sample matched snippets (JD → Resume):")
+                    for jd_snip, res_snip, sc in top_pairs:
+                        st.markdown(f"- **JD:** {jd_snip}")
+                        st.markdown(f"  - **Resume:** {res_snip} (sim={sc:.2f})")
+                else:
+                    st.write("Not enough text for snippet preview.")
+            except Exception:
+                st.write("Snippet preview unavailable.")
 
-# old condition to warn if analyze pressed but inputs missing
+    st.markdown("<br>", unsafe_allow_html=True)
+
+# warn if analyze pressed but missing inputs
 elif analyze:
     st.warning("⚠️ Please upload a resume and either upload or paste a job description before analyzing.")
 
-st.markdown("""
-<script>
-function toggleCard(id) {
-    var box = document.getElementById(id);
-    if (box.style.display === "block") {
-        box.style.display = "none";
-    } else {
-        box.style.display = "block";
-    }
-}
-</script>
-""", unsafe_allow_html=True)
-
+# Footer
 st.markdown(
     "<hr><p style='text-align:center; color: gray; font-size:12px;'>© 2025 Sai Kiran. All rights reserved.</p>",
     unsafe_allow_html=True
