@@ -337,7 +337,7 @@ if analyze and resume_text and jd_text and jd_text.strip():
     with c1:
         header_text = f"🎓 Education — {'Matched' if edu_match else 'Not matched'}"
         # style header as markdown to look like a card
-        st.markdown(f"<div style='background:#f8fafc;padding:10px;border-radius:8px;text-align:center;font-weight:700'>{header_text}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='background:transparent;border:1px solid #e6e6e6;padding:10px;border-radius:8px;text-align:center;font-weight:700'>{header_text}</div>", unsafe_allow_html=True)
         with st.expander("View education details"):
             st.write("**Detected Degrees:**", ", ".join(resume_degrees) if resume_degrees else "None detected")
             if edu_match:
@@ -348,7 +348,7 @@ if analyze and resume_text and jd_text and jd_text.strip():
     # SKILLS
     with c2:
         header_text = f"🧠 Skills — {len(matched_skills)}/{len(jd_skills) if jd_skills else 0} matched"
-        st.markdown(f"<div style='background:#f8fafc;padding:10px;border-radius:8px;text-align:center;font-weight:700'>{header_text}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='background:transparent;border:1px solid #e6e6e6;padding:10px;border-radius:8px;text-align:center;font-weight:700'>{header_text}</div>", unsafe_allow_html=True)
         with st.expander("View matched & missing skills"):
             st.markdown("**Matched Skills:**")
             if matched_skills:
@@ -367,7 +367,7 @@ if analyze and resume_text and jd_text and jd_text.strip():
     # SEMANTIC
     with c3:
         header_text = f"🤖 Semantic Match — {similarity_score}%"
-        st.markdown(f"<div style='background:#f8fafc;padding:10px;border-radius:8px;text-align:center;font-weight:700'>{header_text}</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='background:transparent;border:1px solid #e6e6e6;padding:10px;border-radius:8px;text-align:center;font-weight:700'>{header_text}</div>", unsafe_allow_html=True)
         with st.expander("Why this matters / examples"):
             st.write("This score measures contextual similarity between the resume and the job description.")
             # show up to 3 JD -> resume snippet matches
