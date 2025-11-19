@@ -1,4 +1,4 @@
-📄✨ AI-Powered Resume Analyzer — Complete Documentation
+# 📄✨ AI-Powered Resume Analyzer — Complete Documentation
 
 Welcome to the AI-Powered Resume Analyzer — an intelligent system that evaluates how well a resume matches a job description using NLP, semantic similarity, skill mapping, and weighted scoring.
 
@@ -6,7 +6,7 @@ This project delivers a professional, ATS-style analysis with a beautiful Apple-
 
 ---
 
-🚀 Project Overview
+# 🚀 Project Overview
 
 The Resume Analyzer helps candidates and recruiters quickly determine resume–job alignment by analyzing:
 
@@ -20,7 +20,7 @@ The system uses state-of-the-art embeddings, custom rules, and a clean, interact
 
 ---
 
-⭐ Key Features
+# ⭐ Key Features
 
 1. 🔍 Smart Resume & JD Parsing
    - Upload Resume: PDF, DOCX
@@ -51,7 +51,7 @@ The system uses state-of-the-art embeddings, custom rules, and a clean, interact
 
 ---
 
-🛠️ Tech Stack
+# 🛠️ Tech Stack
 
 Category | Technology
 ---------|------------
@@ -65,36 +65,42 @@ Backend | Python 3
 
 ---
 
-⚙️ Installation Guide
+# ⚙️ Installation Guide
 
-1️⃣ Clone the Project <br>
-git clone https://github.com/sai-kiran10/Resume_Analyzer.git <br>
+1️⃣ **Clone the Project**
+```bash
+git clone https://github.com/sai-kiran10/Resume_Analyzer.git
 cd resume-analyzer
-
-2️⃣ Create Virtual Environment <br>
-python -m venv venv <br>
-venv/Scripts/activate    #Windows <br>
+```
+2️⃣ **Create Virtual Environment**
+```bash
+python -m venv venv 
+venv/Scripts/activate    #Windows 
 source venv/bin/activate  #Linux/macOS
-
-3️⃣ Install Requirements <br>
+```
+3️⃣ **Install Requirements**
+```bash
 pip install -r requirements.txt 
-
-4️⃣ Install SpaCy Model <br>
+```
+4️⃣ **Install SpaCy Model**
+```bash
 python -m spacy download en_core_web_sm
-
+```
 ---
 
 ▶️ Run the Application
 
-Start the Streamlit server: <br>
+**Start the Streamlit server:**
+```bash
 streamlit run app.py
-
-App opens at: <br>
+```
+**App opens at:**
+```bash
 http://localhost:8501
-
+```
 ---
 
-🧩 How It Works – Step by Step
+# 🧩 How It Works – Step by Step
 
 Step 1 — Upload Resume
 - PDF or DOCX format
@@ -113,7 +119,7 @@ Step 4 — View Results
 
 ---
 
-📊 Weighted Scoring Formula
+📊 **Weighted Scoring Formula**
 
 Factor | Weight | Example
 -------|--------|--------
@@ -126,9 +132,8 @@ overall = (skills * 70) + (education ? 10 : 0) + (semantic * 0.2)
 
 ---
 
-🔮 Future Scope
-
-Planned Enhancements:
+# 🔮 Future Scope
+**Planned Enhancements:**
 - 🧭 Skill Graph Visualization
 - 🤝 Multi-Resume Comparison
 - 🧾 Resume Rewrite Suggestions (AI-Generated)
